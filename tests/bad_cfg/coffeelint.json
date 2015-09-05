@@ -1,0 +1,12 @@
+{
+  "camel_case_classes": {
+    "level": "ignore"x
+  },
+  "no_tabs": {
+    "level": "ignore"
+  },
+  "indentation": {
+    "level": "error",
+    "value": 4
+  }
+}

@@ -1,4 +1,4 @@
 
-class food
-	constructor: ->
-		
+class Food
+
+33 33

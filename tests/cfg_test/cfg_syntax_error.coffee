@@ -1,3 +1,0 @@
-
-class foods
-	constructor: ->

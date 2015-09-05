@@ -22,8 +22,8 @@ jslint_error_re = re.compile(r'\[.*?\]:\d+:\d+:\s* .*?:(.*?)\s*\^\s*')
 
 def find_filename(path, filename):
 	"""
-	Yield full filepath for existing filename in the first directory in and above path,
-	or None if not found.
+	Return full filepath for existing filename in
+	the first directory in or above path, or None if not found.
 	"""
 	first_filename = None
 	cur_path = path
@@ -41,6 +41,8 @@ def find_filename(path, filename):
 		cur_path = new_path
 
 	return first_filename
+
+# Mostly boilerplate linter code, lifted from koCoffeeScriptLinter.
 
 class ElCoffeeScriptLinter():
 	_com_interfaces_ = [components.interfaces.koILinter]
@@ -114,7 +116,6 @@ class ElCoffeeScriptLinter():
 			log.exception("Problem running %s", coffeelintExe)
 		finally:
 			os.unlink(tmpfilename)
-			pass
 
 		results = koLintResults()
 		try:
@@ -136,10 +137,12 @@ def jslint_severity(string):
 
 def jslint_description(msg, evidence, line):
 
-	# Compiler errors need additional grooming.
 
 	m = jslint_error_re.match(msg)
 	if m:
+		# Compiler errors need additional grooming since
+		# they contain redundant information and a copy
+		# of the text from the problematic line.
 		msg = m.group(1)
 		msg = msg.replace(line, "")
 

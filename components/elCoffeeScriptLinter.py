@@ -79,7 +79,7 @@ class CoffeeLintRequest(object):
 			xml.sax.parseString(stdin,
 								JslintXmlHandler(self),
 								ErrorXmlHandler(self))
-			log.warn("Parsed coffeelint result successfully")
+			# log.warn("Parsed coffeelint result successfully")
 		except Exception, e:
 			log.exception("Could not parse coffeelint result: %s", e);
 			self.add_internal_error(MSG_XML_EXCEPTION)

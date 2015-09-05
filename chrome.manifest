@@ -1,0 +1,3 @@
+content koffeelint jar:koffeelint.jar!/content/
+skin koffeelint classic/1.0 jar:koffeelint.jar!/skin/
+locale koffeelint en-US jar:koffeelint.jar!/locale/en-US/

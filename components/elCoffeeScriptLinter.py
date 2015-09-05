@@ -15,7 +15,8 @@ log = logging.getLogger('koffeelint')
 
 _complained = {}
 
-jslint_reason_re = re.compile(r'\[(.*)\]\s*(.*)')
+jslint_reason_re = re.compile(r'^\[(.*?)\]\s*(.*)')
+jslint_error_re = re.compile(r'\[.*?\]:\d+:\d+:\s* .*?:(.*?)\s*\^\s*')
 
 # Shamelessly lifted from https://github.com/Komodo/komodo-editorconfig/blob/master/pylib/editorconfig/handler.py
 
@@ -89,7 +90,6 @@ class ElCoffeeScriptLinter():
 
 		textlines = text.splitlines()
 		cwd = request.cwd
-		log.warn("cwd = " + cwd);
 
 		# CoffeeLint looks for a coffeelint.json config file somewhere at or
 		# above the directory of the input file. Unfortunately, we're
@@ -102,10 +102,8 @@ class ElCoffeeScriptLinter():
 		cmd = None
 
 		if configfile == None:
-			# log.warn("no config file!")
 			cmd = [coffeelintExe, "--color=never", "--reporter", "jslint", tmpfilename]
 		else:
-			# log.warn("using config file " + str(configfile))
 			cmd = [coffeelintExe, "--color=never", "-f", configfile, "--reporter", "jslint", tmpfilename]
 
 		try:
@@ -120,7 +118,9 @@ class ElCoffeeScriptLinter():
 
 		results = koLintResults()
 		try:
-			xml.sax.parseString(stdin, jslintXmlHandler(results, textlines))
+			xml.sax.parseString(stdin,
+								jslintXmlHandler(results, textlines),
+								errorXmlHandler(results, textlines, configfile))
 		except:
 			log.exception("Could not parse coffeelint result");
 
@@ -134,12 +134,36 @@ def jslint_severity(string):
 	else:
 		return SEV_INFO
 
-def jslint_description(msg, evidence):
-	if evidence != "undefined":
-		return msg + " : " + evidence
-	else:
-		return msg
+def jslint_description(msg, evidence, line):
 
+	# Compiler errors need additional grooming.
+
+	m = jslint_error_re.match(msg)
+	if m:
+		msg = m.group(1)
+		msg = msg.replace(line, "")
+
+	if evidence != "undefined":
+		msg = msg + " : " + evidence
+
+	return msg
+
+class errorXmlHandler(xml.sax.handler.ErrorHandler):
+	def __init__(self, results, textlines, configfile):
+		self.results = results
+		self.textlines = textlines
+		self.configfile = configfile
+
+	def fatalError(self, exception):
+		# Bad return from coffeelint? Assume it's a config error.
+		self.addResult(SEV_ERROR, 1, "Error parsing coffeelint results. Is " + str(self.configfile) + " a valid JSON file?")
+
+	def addResult(self, severity, lineNo, desc):
+		createAddResult(self.results,
+						self.textlines,
+						severity,
+						lineNo,
+						desc)
 
 class jslintXmlHandler(xml.sax.handler.ContentHandler):
 	def __init__(self, results, textlines):
@@ -156,7 +180,10 @@ class jslintXmlHandler(xml.sax.handler.ContentHandler):
 				rawSeverity = m.group(1)
 				rawMessage = m.group(2)
 				severity = jslint_severity(rawSeverity)
-				description = jslint_description(rawMessage, evidence)
+				line = ""
+				if lineStart > 0:
+					line = self.textlines[lineStart - 1]
+				description = jslint_description(rawMessage, evidence, line)
 				self.addResult(severity, lineStart, description)
 
 	def addResult(self, severity, lineNo, desc):

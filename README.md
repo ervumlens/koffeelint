@@ -10,6 +10,7 @@ It provides CoffeeScript linting by calling whatever version of CoffeeLint is in
 Install the KoffeeLint extension XPI from https://github.com/ervumlens/koffeelint/releases .
 
 Once these are installed, enable CoffeeScript linting in Komodo:
+
 1. Open Preferences.
 2. Click "Syntax Checking".
 3. Select CoffeeScript under "Language-specific syntax checking properties".
